@@ -11,7 +11,7 @@
          at the bottom of this file. Format is free-form; date +
          counter is easiest to keep unique.
          ============================================================ -->
-    <meta name="build-version" content="2026-08-12-01">
+    <meta name="build-version" content="2026-11-02-01">
 
     <!-- These meta hints are largely ignored by modern browsers for the
          top-level document. Harmless, kept only as belt-and-braces. -->
@@ -703,7 +703,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>Is the responsibility for energy usage allocated to specific person or persons?</label>
+                <label>Is the responsibility for energy usage allocated to specific person or persons on site?</label>
                 <div class="choice-list">
                     <label class="choice-item"><input type="radio" name="energyResponsible" value="Yes"> Yes</label>
                     <label class="choice-item"><input type="radio" name="energyResponsible" value="No"> No</label>
@@ -887,23 +887,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Are any obstructions or partitions preventing free cross flow of air?</label>
-                    <div class="choice-list">
-                        <label class="choice-item"><input type="radio" name="mixedObstructions" value="Yes"> Yes</label>
-                        <label class="choice-item"><input type="radio" name="mixedObstructions" value="No"> No</label>
-                        <label class="choice-item"><input type="radio" name="mixedObstructions" value="Don't Know"> Don't Know</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Are there areas of the building where stratification can occur, for example atria and high ceilings?</label>
-                    <div class="choice-list">
-                        <label class="choice-item"><input type="radio" name="mixedStratification" value="Yes"> Yes</label>
-                        <label class="choice-item"><input type="radio" name="mixedStratification" value="No"> No</label>
-                        <label class="choice-item"><input type="radio" name="mixedStratification" value="Don't Know"> Don't Know</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Are the mixed mode changeover controls appropriately set and are adjustments delegated to a suitably qualified person?</label>
+                    <label>Are the mixed mode changeover controls appropriately set and are adjustments delegated to a suitably qualified person on site?</label>
                     <div class="choice-list">
                         <label class="choice-item"><input type="radio" name="mixedChangeoverControls" value="Yes"> Yes</label>
                         <label class="choice-item"><input type="radio" name="mixedChangeoverControls" value="No"> No</label>
@@ -947,6 +931,14 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label>Is there a service and maintenance plan in place that addresses ventilation energy efficiency?</label>
+                    <div class="choice-list">
+                        <label class="choice-item"><input type="radio" name="mechMaintenancePlan" value="Yes"> Yes</label>
+                        <label class="choice-item"><input type="radio" name="mechMaintenancePlan" value="No"> No</label>
+                        <label class="choice-item"><input type="radio" name="mechMaintenancePlan" value="Don't Know"> Don't Know</label>
+                    </div>
+                </div>
+                <div class="form-group">
                     <div class="label-row">
                         <label>Do the mechanical ventilation systems have variable controls?</label>
                         <button type="button" class="help-icon-btn" onclick="openHelp('mechVariable')" aria-label="What does this mean?">?</button>
@@ -954,14 +946,6 @@
                     <div class="choice-list">
                         <label class="choice-item"><input type="radio" name="mechVariable" value="Yes"> Yes</label>
                         <label class="choice-item"><input type="radio" name="mechVariable" value="No"> No</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Is there a service and maintenance plan in place that addresses ventilation energy efficiency?</label>
-                    <div class="choice-list">
-                        <label class="choice-item"><input type="radio" name="mechMaintenancePlan" value="Yes"> Yes</label>
-                        <label class="choice-item"><input type="radio" name="mechMaintenancePlan" value="No"> No</label>
-                        <label class="choice-item"><input type="radio" name="mechMaintenancePlan" value="Don't Know"> Don't Know</label>
                     </div>
                 </div>
             </div>
@@ -1021,6 +1005,14 @@
                         <label class="choice-item"><input type="radio" name="acAge" value="Yes"> Yes</label>
                         <label class="choice-item"><input type="radio" name="acAge" value="No"> No</label>
                         <label class="choice-item"><input type="radio" name="acAge" value="Don't Know"> Don't Know</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Do you have a servicing and maintenance plan in place that addresses air conditioning efficiency?</label>
+                    <div class="choice-list">
+                        <label class="choice-item"><input type="radio" name="acMaintenancePlan" value="Yes"> Yes</label>
+                        <label class="choice-item"><input type="radio" name="acMaintenancePlan" value="No"> No</label>
+                        <label class="choice-item"><input type="radio" name="acMaintenancePlan" value="Don't Know"> Don't Know</label>
                     </div>
                 </div>
             </div>
@@ -1296,6 +1288,8 @@
             </p>
         </div>
 
+        <input type="hidden" id="summary" name="summary">
+
         <div class="footer-nav">
             <button type="button" class="btn btn-secondary" id="prevBtn" onclick="changeStep(-1)" disabled>Back</button>
             <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">Next Section</button>
@@ -1450,7 +1444,15 @@
         nextBtn.textContent = "Sending Profile...";
 
         // Dynamic transmission mapping payload direct via script injection
-        emailjs.sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, this)
+        // Only send answers from sections the respondent actually saw.
+        // Fields inside a hidden conditional block are disabled, so they are
+        // left out of the submission entirely (disabled fields are never sent).
+        const form = this;
+        document.getElementById('summary').value = buildSummary(form);
+        setHiddenSectionFields(form, true);
+
+        emailjs.sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, form)
+            .finally(() => setHiddenSectionFields(form, false))
             .then(() => {
                 alert('Thank you! Your survey checklist profile has been compiled and securely sent to our engineering team.');
                 nextBtn.textContent = "Profile Submitted";
@@ -1460,6 +1462,73 @@
                 nextBtn.textContent = "Submit Profile";
             });
     });
+
+    // --- SUBMISSION FILTERING: only selected sections are sent ---
+    // A field is "shown" if it is not inside any collapsed conditional block.
+    function isInShownSection(field) {
+        let block = field.closest('.conditional-block');
+        while (block) {
+            if (block.style.display !== 'block') return false;
+            block = block.parentElement.closest('.conditional-block');
+        }
+        return true;
+    }
+
+    function setHiddenSectionFields(form, disable) {
+        form.querySelectorAll('input, select, textarea').forEach(f => {
+            if (f.id === 'summary') return;
+            f.disabled = disable ? !isInShownSection(f) : false;
+        });
+    }
+
+    function escapeHtml(t) {
+        return String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function questionFor(field) {
+        if (field.id) {
+            const forLabel = document.querySelector('label[for="' + field.id + '"]');
+            if (forLabel) return forLabel.textContent.trim();
+        }
+        const container = field.closest('.form-group, .conditional-block');
+        if (!container) return field.name;
+        const lbl = container.querySelector(':scope > label, :scope > .label-row > label');
+        return lbl ? lbl.textContent.trim() : field.name;
+    }
+
+    // Compiles only the answered questions from visible sections into an
+    // HTML table, sent as {{{summary}}} for use in the EmailJS template.
+    function buildSummary(form) {
+        const done = new Set();
+        let html = '';
+        panels.forEach(panel => {
+            let rows = '';
+            panel.querySelectorAll('input, select, textarea').forEach(f => {
+                if (!f.name || f.type === 'hidden' || done.has(f.name) || !isInShownSection(f)) return;
+                done.add(f.name);
+                let answer = '';
+                if (f.type === 'radio' || f.type === 'checkbox') {
+                    answer = Array.from(form.querySelectorAll('input[name="' + f.name + '"]:checked'))
+                        .map(x => x.value).join(', ');
+                } else if (f.tagName === 'SELECT') {
+                    answer = f.value ? f.options[f.selectedIndex].text : '';
+                } else {
+                    answer = f.value.trim();
+                }
+                if (!answer) return;
+                rows += '<tr><td style="padding:6px 10px;border:1px solid #E2E8F0;vertical-align:top;">' +
+                        escapeHtml(questionFor(f)) +
+                        '</td><td style="padding:6px 10px;border:1px solid #E2E8F0;vertical-align:top;font-weight:600;">' +
+                        escapeHtml(answer) + '</td></tr>';
+            });
+            if (rows) {
+                const title = panel.querySelector('h2.section-title').textContent.trim();
+                html += '<h3 style="color:#2D6A6A;margin:18px 0 6px;">' + escapeHtml(title) + '</h3>' +
+                        '<table style="border-collapse:collapse;width:100%;font-size:13px;">' + rows + '</table>';
+            }
+        });
+        return html;
+    }
 
     function toggleOtherText(selectId, blockId) {
         const value = document.getElementById(selectId).value;
